@@ -1,70 +1,70 @@
 # Crypto Telegram Alert Bot
 
-A lightweight, read-only Telegram bot for live cryptocurrency prices and one-shot price alerts. It uses Python's `asyncio`, `aiohttp`, and `python-telegram-bot`; market data comes from Binance's public REST API. No exchange credentials or trading permissions are required.
+A lightweight Telegram bot that reads live cryptocurrency prices from Binance's public API and sends one-time price alerts. Configure a Telegram token, install the dependencies, and run it locally with `python -m src.bot`—no exchange account or trading permissions required.
 
 ## Features
 
-- `/price BTCUSDT` — fetch the latest public spot price.
-- `/alert BTCUSDT 70000` — create a one-shot alert when the price reaches or exceeds a target.
-- `/list` — display your active alerts and their IDs.
-- `/cancel [alert_id|all]` — cancel one alert or all of your alerts.
-- Async market requests, an asynchronous alert worker, graceful shutdown, and standard-library logging.
-- In-memory alert storage and deterministic tests using mocked HTTP/market clients.
+- `/price BTCUSDT` — fetch the latest public spot price
+- `/alert BTCUSDT 70000` — create a one-time target-price alert
+- `/list` — show active alerts and their IDs
+- `/cancel <alert_id|all>` — cancel one alert or all alerts
+- Asynchronous market requests and background alert monitoring
+- Graceful shutdown, structured logging, and deterministic mocked tests
 
-> **Safety:** This project only reads public market data. It cannot place trades, withdraw funds, or access private account data. Alerts are held in memory and are lost when the process stops.
-
-## Architecture
-
-```text
-Telegram updates -> python-telegram-bot handlers -> AlertStore
-                                                  |       |
-                                      AlertWorker +---- AsyncMarketClient -> Binance REST
-```
-
-- `src/config.py` loads and validates environment settings.
-- `src/market.py` owns the read-only `aiohttp` client and ticker parsing.
-- `src/alerts.py` provides a concurrency-safe in-memory store and polling worker.
-- `src/bot.py` wires the Telegram commands and manages startup/shutdown.
-
-## Quickstart
+## Quick Start
 
 Requires Python 3.10 or newer.
 
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/naomi197/crypto-telegram-alert-bot.git
 cd crypto-telegram-alert-bot
 python -m venv .venv
-source .venv/bin/activate       # Windows: .venv\Scripts\activate
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 python -m pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Set `TELEGRAM_BOT_TOKEN` in `.env` to a token created with [@BotFather](https://t.me/BotFather), then run:
+Set `TELEGRAM_BOT_TOKEN` in `.env` using a token created with Telegram's `@BotFather`, then start the bot:
 
 ```bash
 python -m src.bot
 ```
 
-Never commit `.env` or share your bot token. No Binance API key is needed.
+## Architecture
+
+```text
+Telegram commands -> Bot handlers -> Alert store
+                                  |        |
+                           Alert worker -> Binance public REST API
+```
+
+- `src/config.py` loads and validates environment settings
+- `src/market.py` handles asynchronous market-data requests
+- `src/alerts.py` manages alerts and the polling worker
+- `src/bot.py` registers commands and controls startup and shutdown
+
+## Configuration
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `TELEGRAM_BOT_TOKEN` | Required | Telegram bot token from BotFather |
+| `BINANCE_BASE_URL` | `https://api.binance.com` | Public market API base URL |
+| `POLL_INTERVAL_SECONDS` | `15` | Alert-check interval |
+| `REQUEST_TIMEOUT_SECONDS` | `10` | HTTP request timeout |
+| `LOG_LEVEL` | `INFO` | Python logging level |
 
 ## Testing
 
-Tests use mocked market responses; they do not make network calls and do not require a Telegram token.
+Tests use mocked market responses and do not require network access or a Telegram token.
 
 ```bash
 pytest tests
 ```
 
-## Configuration
+## Safety
 
-| Variable | Default | Description |
-|---|---:|---|
-| `TELEGRAM_BOT_TOKEN` | required | Telegram bot token from BotFather |
-| `BINANCE_BASE_URL` | `https://api.binance.com` | Public market API base URL |
-| `POLL_INTERVAL_SECONDS` | `15` | Alert check interval |
-| `REQUEST_TIMEOUT_SECONDS` | `10` | HTTP request timeout |
-| `LOG_LEVEL` | `INFO` | Standard Python logging level |
+The bot only reads public market data. It cannot place trades, withdraw funds, or access private exchange data. Alerts are stored in memory and reset when the process stops.
 
 ## License
 
-This project is provided under the MIT License. See [LICENSE](LICENSE).
+This project is available under the MIT License. See `LICENSE` for details.
